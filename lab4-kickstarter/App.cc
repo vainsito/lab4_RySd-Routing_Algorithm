@@ -12,6 +12,9 @@ private:
     cMessage *sendMsgEvent;
     cStdDev delayStats;
     cOutVector delayVector;
+    cStdDev hops;
+    cOutVector PacketGen;
+    int packetgenerator;
 public:
     App();
     virtual ~App();
@@ -39,16 +42,21 @@ void App::initialize() {
         sendMsgEvent = new cMessage("sendEvent");
         scheduleAt(par("interArrivalTime"), sendMsgEvent);
     }
-
+    PacketGen.setName("Packets Generated");
+    PacketGen.record(0);
+    packetgenerator = 0;
     // Initialize statistics
     delayStats.setName("TotalDelay");
     delayVector.setName("Delay");
+    hops.setName("Number of Hops");
 }
 
 void App::finish() {
     // Record statistics
     recordScalar("Average delay", delayStats.getMean());
     recordScalar("Number of packets", delayStats.getCount());
+    recordScalar("Hops", hops.getMean());
+    // Saca un promedio entre los hops de cada paquete. Los pkt provenientes de el nodo 2 hacen 5 saltos, los del nodo 0 hacen 3.
 }
 
 void App::handleMessage(cMessage *msg) {
@@ -60,21 +68,24 @@ void App::handleMessage(cMessage *msg) {
         pkt->setByteLength(par("packetByteSize"));
         pkt->setSource(this->getParentModule()->getIndex());
         pkt->setDestination(par("destination"));
-
         // send to net layer
         send(pkt, "toNet$o");
 
         // compute the new departure time and schedule next sendMsgEvent
         simtime_t departureTime = simTime() + par("interArrivalTime");
         scheduleAt(departureTime, sendMsgEvent);
+        packetgenerator++;
+        PacketGen.record(packetgenerator);
 
     }
     // else, msg is a packet from net layer
     else {
         // compute delay and record statistics
         simtime_t delay = simTime() - msg->getCreationTime();
+        Packet *pkt = (Packet *) msg;
         delayStats.collect(delay);
         delayVector.record(delay);
+        hops.collect(pkt->getHopCount());
         // delete msg
         delete (msg);
     }
