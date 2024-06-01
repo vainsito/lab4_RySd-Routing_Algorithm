@@ -68,6 +68,7 @@ void App::handleMessage(cMessage *msg) {
         pkt->setByteLength(par("packetByteSize"));
         pkt->setSource(this->getParentModule()->getIndex());
         pkt->setDestination(par("destination"));
+        pkt->setKind(0);
         // send to net layer
         send(pkt, "toNet$o");
 

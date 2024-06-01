@@ -13,6 +13,8 @@ simple Net
 {
     parameters:
         @display("i=block/dispatch");
+        int destination = default(0);
+        int packetByteSize = default(125); // bytes
     gates:
         inout toApp;
         inout toLnk[];
