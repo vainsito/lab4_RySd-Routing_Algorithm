@@ -69,10 +69,10 @@ void Net::finish() {
 
 void Net::sendPacket(Packet *pkt){
 
-    if (hops_antihorario < hops_horario){
+    if (hops_antihorario > hops_horario){
         out = 0;
     }
-    else if (hops_antihorario > hops_horario){
+    else if (hops_antihorario < hops_horario){
         out = 1;
     }
     else {
@@ -109,7 +109,7 @@ void Net::handleMessage(cMessage *msg) {
         back->setByteLength(par("packetByteSize"));
         delete (pkt);
         pkt = nullptr;
-        send(back,"toLnk$o",0);
+        send(back,"toLnk$o",1);
 
     } else if (pkt->getDestination() == this->getParentModule()->getIndex() && pkt->getKind() == 3){
         Packet *back = new Packet();
@@ -120,7 +120,7 @@ void Net::handleMessage(cMessage *msg) {
         back->setByteLength(par("packetByteSize"));
         delete (pkt);
         pkt = nullptr;
-        send(back,"toLnk$o",1);
+        send(back,"toLnk$o",0);
 
     } else if(pkt->getDestination() == this->getParentModule()->getIndex() && pkt->getKind() == 4){
         hops_horario = pkt->getHopCount();
@@ -143,9 +143,7 @@ void Net::handleMessage(cMessage *msg) {
         } else if (pkt->arrivedOn("toLnk$i")){
 
         // If not, forward the packet to some else... to who?
-                if (pkt->getKind() == 2 or pkt->getKind() == 3 or pkt->getKind() == 4 or pkt->getKind() == 5){
-                    pkt->setHopCount(pkt->getHopCount() + 1);
-                }
+                pkt->setHopCount(pkt->getHopCount() + 1);
 
                 if (pkt->arrivedOn("toLnk$i",0)) {
                     send(pkt,"toLnk$o",1);
